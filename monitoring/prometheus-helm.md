@@ -1,72 +1,55 @@
-# 📊 Grafana Installation using Helm
+# 🛠️ Prometheus Installation using Helm
 
-This document outlines how to install and access Grafana using Helm on a Kubernetes cluster.
+This guide explains how to install Prometheus on Kubernetes using Helm.
 
 ---
 
 ## ✅ Prerequisites
 
-- Kubernetes cluster
-- Helm v3+
-- Prometheus stack (already deployed)
-- `kubectl` configured
+- Kubernetes cluster (EKS or local)
+- `kubectl` installed and configured
+- Helm installed (`v3+`)
+- Internet access from the cluster to pull Helm charts
 
 ---
 
-## 🛠️ Step 1: Access Grafana
-
-Grafana is included with `kube-prometheus-stack`.
-
-Check if it's installed:
+## 📥 Step 1: Add Helm Repo
 
 ```bash
-kubectl get svc -n monitoring
-```
-
-Find a service like:
-
-```
-prometheus-grafana   ClusterIP   10.XX.XX.X   <none>   80/TCP   5m
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
 ```
 
 ---
 
-## 🌐 Step 2: Port Forward
+## 🚀 Step 2: Install Prometheus Stack
 
 ```bash
-kubectl port-forward svc/prometheus-grafana -n monitoring 3000:80
+helm install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
 ```
 
-Access Grafana: [http://localhost:3000](http://localhost:3000)
+---
+
+## 🔍 Step 3: Verify Installation
+
+```bash
+kubectl get all -n monitoring
+```
+
+You should see Prometheus pods, services, and related CRDs.
 
 ---
 
-## 🔐 Step 3: Login Credentials
+## 🌐 Step 4: Access Prometheus UI
 
-Default:
-- **Username**: admin
-- **Password**: `kubectl get secret --namespace monitoring prometheus-grafana -o jsonpath="{.data.admin-password}" | base64 --decode`
+Use port forwarding:
 
----
+```bash
+kubectl port-forward svc/prometheus-kube-prometheus-prometheus -n monitoring 9090:9090
+```
 
-## 📈 Step 4: Import Dashboards
+Open in browser: [http://localhost:9090](http://localhost:9090)
 
-1. Login to Grafana
-2. Go to **Dashboards > Import**
-3. Use Dashboard ID from [Grafana.com](https://grafana.com/grafana/dashboards/)
-
-Example: Node Exporter Full - ID `1860`
-
----
-
-## 🧪 Step 5: Connect to Prometheus (if needed)
-
-- Navigate to **Configuration > Data Sources**
-- Add Prometheus with URL: `http://prometheus-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090`
-
----
-
-## 🗂 Notes
-
-- Change service type to LoadBalancer or configure Ingress for public access.
-- Customize dashboards for Kubernetes metrics.
+Or expose it via LoadBalancer or Ingress if required.
